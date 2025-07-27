@@ -242,23 +242,17 @@ DELETE /api/expense/{id} – Delete
 
 
 
-📸 Screenshots
+## 📸 Screenshots
 
-🔐 Login Page
+🔐 **Login Page**  
+![Login](https://github.com/Sajaltripathi07/Expense_tracker_/blob/main/assets/login.png?raw=true)
 
-![Login](assets/login.png)
+📊 **Dashboard**  
+![dashboard](https://github.com/Sajaltripathi07/Expense_tracker_/blob/main/assets/dashboard.png?raw=true)
 
+➕ **Add Expense**  
+![AddExpense](https://github.com/Sajaltripathi07/Expense_tracker_/blob/main/assets/addExpense.png?raw=true)
 
-
-📊 Dashboard
-
-![dashboard](assets/dashboard.png)
-
-
-
-➕ Add Expense
-
-![AddExpense](assets/addExpense.png)
 
 
 
