@@ -242,26 +242,6 @@ DELETE /api/expense/{id} – Delete
 
 
 
-📸 Screenshots
-
-🔐 Login Page
-
-![Login](assets/login.png)
-
-
-
-📊 Dashboard
-
-![dashboard](assets/dashboard.png)
-
-
-
-➕ Add Expense
-
-![AddExpense](assets/addExpense.png)
-
-
-
 🔐 Security
 
 🔒 BCrypt password hashing
@@ -284,7 +264,6 @@ DELETE /api/expense/{id} – Delete
 
 
 
-🚫 SQL/XSS protection with JPA \& Thymeleaf
 
 
 
