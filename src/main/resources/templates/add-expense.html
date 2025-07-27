@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Expense</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 16px 16px 16px 48px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .date-options {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .date-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .date-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .date-option.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .custom-date-input {
+            display: none;
+        }
+
+        .custom-date-input.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .account-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .account-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .account-balance {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .category-option {
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .category-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .category-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .category-option i {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .amount-input {
+            position: relative;
+        }
+
+        .amount-input::before {
+            content: '₹';
+            position: absolute;
+            left: 48px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-weight: 600;
+            font-size: 16px;
+            z-index: 1;
+        }
+
+        .amount-input input {
+            padding-left: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 30px 20px;
+            }
+            
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="back-btn" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+    <div class="header">
+        <h1><i class="fas fa-plus-circle"></i> Add New Expense</h1>
+        <p>Track your spending with detailed information</p>
+    </div>
+
+    <form th:action="@{/saveExpense}" th:object="${expense}" method="post">
+        
+        <!-- Description -->
+        <div class="form-group">
+            <label for="description">Description</label>
+            <div class="input-wrapper">
+                <i class="fas fa-edit"></i>
+                <input type="text" th:field="*{description}" id="description" 
+                       placeholder="What did you spend on?" required>
+            </div>
+        </div>
+
+        <!-- Amount -->
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <div class="input-wrapper amount-input">
+                <i class="fas fa-rupee-sign"></i>
+                <input type="number" step="0.01" th:field="*{amount}" id="amount" 
+                       placeholder="0.00" required min="0">
+            </div>
+        </div>
+
+        <!-- Date Selection -->
+        <div class="form-group">
+            <label>Date</label>
+            <div class="date-options">
+                <div class="date-option active" onclick="selectDateOption('today')">
+                    <i class="fas fa-calendar-day"></i>
+                    Today
+                </div>
+                <div class="date-option" onclick="selectDateOption('yesterday')">
+                    <i class="fas fa-calendar-minus"></i>
+                    Yesterday
+                </div>
+                <div class="date-option" onclick="selectDateOption('custom')">
+                    <i class="fas fa-calendar-alt"></i>
+                    Custom
+                </div>
+            </div>
+            <div class="input-wrapper custom-date-input" id="customDateInput">
+                <i class="fas fa-calendar"></i>
+                <input type="date" th:field="*{date}" id="date" required>
+            </div>
+        </div>
+
+        <!-- Category Selection -->
+        <div class="form-group">
+            <label>Category</label>
+            <div class="category-grid">
+                <div class="category-option" onclick="selectCategory('Food')">
+                    <i class="fas fa-utensils"></i>
+                    Food
+                </div>
+                <div class="category-option" onclick="selectCategory('Transport')">
+                    <i class="fas fa-car"></i>
+                    Transport
+                </div>
+                <div class="category-option" onclick="selectCategory('Shopping')">
+                    <i class="fas fa-shopping-bag"></i>
+                    Shopping
+                </div>
+                <div class="category-option" onclick="selectCategory('Bills')">
+                    <i class="fas fa-file-invoice"></i>
+                    Bills
+                </div>
+                <div class="category-option" onclick="selectCategory('Entertainment')">
+                    <i class="fas fa-film"></i>
+                    Entertainment
+                </div>
+                <div class="category-option" onclick="selectCategory('Healthcare')">
+                    <i class="fas fa-heartbeat"></i>
+                    Healthcare
+                </div>
+                <div class="category-option" onclick="selectCategory('Education')">
+                    <i class="fas fa-graduation-cap"></i>
+                    Education
+                </div>
+                <div class="category-option" onclick="selectCategory('Others')">
+                    <i class="fas fa-ellipsis-h"></i>
+                    Others
+                </div>
+            </div>
+            <input type="hidden" th:field="*{category}" id="categoryInput" required>
+        </div>
+
+        <button type="submit" class="btn">
+            <i class="fas fa-save"></i>
+            Save Expense
+        </button>
+    </form>
+</div>
+
+<script>
+    // Set today's date as default
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').value = today;
+    });
+
+    function selectDateOption(option) {
+        const dateOptions = document.querySelectorAll('.date-option');
+        const customDateInput = document.getElementById('customDateInput');
+        const dateInput = document.getElementById('date');
+        
+        // Remove active class from all options
+        dateOptions.forEach(opt => opt.classList.remove('active'));
+        
+        // Add active class to selected option
+        event.target.closest('.date-option').classList.add('active');
+        
+        const today = new Date();
+        
+        switch(option) {
+            case 'today':
+                dateInput.value = today.toISOString().split('T')[0];
+                customDateInput.classList.remove('show');
+                break;
+            case 'yesterday':
+                const yesterday = new Date(today);
+                yesterday.setDate(today.getDate() - 1);
+                dateInput.value = yesterday.toISOString().split('T')[0];
+                customDateInput.classList.remove('show');
+                break;
+            case 'custom':
+                customDateInput.classList.add('show');
+                break;
+        }
+    }
+
+    function selectCategory(category) {
+        const categoryOptions = document.querySelectorAll('.category-option');
+        const categoryInput = document.getElementById('categoryInput');
+        
+        // Remove selected class from all options
+        categoryOptions.forEach(opt => opt.classList.remove('selected'));
+        
+        // Add selected class to clicked option
+        event.target.closest('.category-option').classList.add('selected');
+        
+        // Set the hidden input value
+        categoryInput.value = category;
+    }
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const category = document.getElementById('categoryInput').value;
+        if (!category) {
+            e.preventDefault();
+            alert('Please select a category');
+            return;
+        }
+    });
+</script>
+
+</body>
+</html>

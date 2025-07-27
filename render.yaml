@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: expense-tracker
+    env: java
+    buildCommand: ./mvnw clean package
+    startCommand: java -jar target/Expense-Tracker-end-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: SERVER_PORT
+        value: 10000 

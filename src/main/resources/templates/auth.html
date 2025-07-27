@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login / Signup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .form-container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            text-align: center;
+        }
+
+        .toggle-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .toggle-buttons button {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 0 10px;
+            padding: 10px 20px;
+            color: #007bff;
+            cursor: pointer;
+            transition: border-bottom 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .toggle-buttons button.active {
+            border-bottom: 3px solid #007bff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .error {
+            color: crimson;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            color: green;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        form:not(.active) {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <!-- 👇 Toggle Buttons -->
+    <div class="toggle-buttons">
+        <button id="loginBtn" onclick="toggleForm(true)" class="active">Login</button>
+        <button id="signupBtn" onclick="toggleForm(false)">Signup</button>
+    </div>
+
+    <!-- Error Message -->
+    <div th:if="${error}" class="error">
+        <p th:text="${error}"></p>
+    </div>
+
+    <!-- Success Message -->
+    <div th:if="${message}" class="message">
+        <p th:text="${message}"></p>
+    </div>
+
+    <!-- Login Form - Using Spring Security's default form login -->
+    <form th:action="@{/login}" method="post" id="loginForm" class="active">
+        <div class="form-group">
+            <label for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" name="username" required />
+        </div>
+        <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" name="password" required />
+        </div>
+        <button type="submit" class="btn">Login</button>
+    </form>
+
+    <!-- Signup Form -->
+    <form th:action="@{/signup}" method="post" id="signupForm">
+        <div class="form-group">
+            <label for="signupUsername">Username</label>
+            <input type="text" id="signupUsername" name="username" required />
+        </div>
+        <div class="form-group">
+            <label for="signupEmail">Email</label>
+            <input type="email" id="signupEmail" name="email" required />
+        </div>
+        <div class="form-group">
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" name="password" required />
+        </div>
+        <div class="form-group">
+            <label for="signupConfirmPassword">Confirm Password</label>
+            <input type="password" id="signupConfirmPassword" name="confirmPassword" required />
+        </div>
+        <button type="submit" class="btn">Signup</button>
+    </form>
+</div>
+
+<script>
+    let isLogin = true;
+
+    function toggleForm(showLogin) {
+        isLogin = showLogin;
+        document.getElementById('loginForm').classList.toggle('active', isLogin);
+        document.getElementById('signupForm').classList.toggle('active', !isLogin);
+
+        document.getElementById('loginBtn').classList.toggle('active', isLogin);
+        document.getElementById('signupBtn').classList.toggle('active', !isLogin);
+    }
+
+    toggleForm(true); // Default to login form
+</script>
+
+</body>
+</html>
