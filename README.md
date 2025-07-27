@@ -246,19 +246,19 @@ DELETE /api/expense/{id} – Delete
 
 🔐 Login Page
 
-!\[Login](assets/login.png)
+![Login](assets/login.png)
 
 
 
 📊 Dashboard
 
-!\[dashboard](assets/dashboard.png)
+![dashboard](assets/dashboard.png)
 
 
 
 ➕ Add Expense
 
-!\[AddExpense](assets/addExpense.png)
+![AddExpense](assets/addExpense.png)
 
 
 
