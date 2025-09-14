@@ -126,7 +126,7 @@
         <p th:text="${message}"></p>
     </div>
 
-    <!-- Login Form - Using Spring Security's default form login -->
+    <!-- Login Form - Let Spring Security establish session -->
     <form th:action="@{/login}" method="post" id="loginForm" class="active">
         <div class="form-group">
             <label for="loginUsername">Username</label>
@@ -139,7 +139,7 @@
         <button type="submit" class="btn">Login</button>
     </form>
 
-    <!-- Signup Form -->
+    <!-- Signup Form (uses API then redirect back to /auth) -->
     <form th:action="@{/signup}" method="post" id="signupForm">
         <div class="form-group">
             <label for="signupUsername">Username</label>
@@ -174,6 +174,43 @@
     }
 
     toggleForm(true); // Default to login form
+
+    function showInlineMessage(message, isError) {
+        const container = document.querySelector('.form-container');
+        let el = document.getElementById('inlineMessage');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'inlineMessage';
+            el.style.marginTop = '10px';
+            container.appendChild(el);
+        }
+        el.className = isError ? 'error' : 'message';
+        el.textContent = message;
+    }
+
+    // Signup: use API, then redirect back to /auth?success to proceed with form login
+    document.getElementById('signupForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const username = document.getElementById('signupUsername').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        const password = document.getElementById('signupPassword').value;
+        const confirmPassword = document.getElementById('signupConfirmPassword').value;
+        try {
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, confirmPassword })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showInlineMessage(data.error || 'Signup failed', true);
+                return;
+            }
+            window.location.href = '/auth?success';
+        } catch (err) {
+            showInlineMessage('Network error during signup', true);
+        }
+    });
 </script>
 
 </body>

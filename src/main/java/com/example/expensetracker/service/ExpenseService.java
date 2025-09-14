@@ -7,6 +7,10 @@ import com.example.expensetracker.repository.ExpenseRepository;
 import com.example.expensetracker.repository.FinancialAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,8 +18,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+/**
+ * Service class for managing expense operations
+ * Handles CRUD operations with Redis caching for performance
+ */
 @Service
 public class ExpenseService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExpenseService.class);
 
     @Autowired
     private ExpenseRepository expenseRepository;
@@ -23,14 +33,25 @@ public class ExpenseService {
     @Autowired
     private FinancialAccountRepository financialAccountRepository;
 
+    /**
+     * Get all expenses (cached for 10 minutes)
+     */
+    @Cacheable(value = "expenses", key = "'all'")
     public List<Expense> getAllExpenses() {
+        logger.debug("Fetching all expenses from database");
         return expenseRepository.findAll();
     }
 
+    /**
+     * Get expenses for a specific user (cached by user ID)
+     */
+    @Cacheable(value = "expensesByUser", key = "#user.id")
     public List<Expense> getExpensesByUser(User user) {
+        logger.debug("Fetching expenses for user: {}", user.getUsername());
         return expenseRepository.findByAccount_User(user);
     }
 
+    @Cacheable(value = "expenseTotals", key = "'total'", unless = "#result == null")
     public BigDecimal getTotalAmount() {
         List<Expense> expenses = expenseRepository.findAll();
         BigDecimal total = BigDecimal.ZERO;
@@ -40,6 +61,7 @@ public class ExpenseService {
         return total;
     }
 
+    @Cacheable(value = "expenseTotalsByUser", key = "#user.id", unless = "#result == null")
     public BigDecimal getTotalAmountByUser(User user) {
         List<Expense> expenses = expenseRepository.findByAccount_User(user);
         BigDecimal total = BigDecimal.ZERO;
@@ -49,6 +71,7 @@ public class ExpenseService {
         return total;
     }
 
+    @Cacheable(value = "expenseHighest", key = "'highest'", unless = "#result == null")
     public BigDecimal getHighestExpense() {
         List<Expense> expenses = expenseRepository.findAll();
         BigDecimal highest = BigDecimal.ZERO;
@@ -60,6 +83,7 @@ public class ExpenseService {
         return highest;
     }
 
+    @Cacheable(value = "expenseHighestByUser", key = "#user.id", unless = "#result == null")
     public BigDecimal getHighestExpenseByUser(User user) {
         List<Expense> expenses = expenseRepository.findByAccount_User(user);
         BigDecimal highest = BigDecimal.ZERO;
@@ -71,10 +95,12 @@ public class ExpenseService {
         return highest;
     }
 
+    @Cacheable(value = "expenseCounts", key = "'count'")
     public long getTotalEntries() {
         return expenseRepository.count();
     }
 
+    @Cacheable(value = "categorySummaryByUser", key = "#user.id")
     public Map<String, BigDecimal> getCategorySummaryByUser(User user) {
         List<Expense> expenses = expenseRepository.findByAccount_User(user);
         Map<String, BigDecimal> categorySummary = new HashMap<>();
@@ -87,7 +113,11 @@ public class ExpenseService {
         return categorySummary;
     }
 
-    // Save a new expense
+    /**
+     * Save a new expense and clear related caches
+     * Auto-categorizes expense if category is not provided
+     */
+    @CacheEvict(value = {"expenses", "expensesByUser", "expenseTotals", "expenseTotalsByUser", "expenseHighest", "expenseHighestByUser", "expenseCounts", "categorySummaryByUser"}, allEntries = true)
     public void saveExpense(Expense expense) {
         if (expense.getCategory() == null || expense.getCategory().isEmpty()) {
             expense.setCategory(categorizeExpense(expense.getDescription()));
@@ -118,6 +148,7 @@ public class ExpenseService {
     }
 
     // Optionally update this too if you handle account changes during update
+    @CacheEvict(value = {"expenses", "expensesByUser", "expenseTotals", "expenseTotalsByUser", "expenseHighest", "expenseHighestByUser", "expenseCounts", "categorySummaryByUser"}, allEntries = true)
     public void updateExpense(Expense updatedExpense) {
         if (updatedExpense.getCategory() == null || updatedExpense.getCategory().isEmpty()) {
             updatedExpense.setCategory(categorizeExpense(updatedExpense.getDescription()));
@@ -141,6 +172,7 @@ public class ExpenseService {
         expenseRepository.save(updatedExpense);
     }
 
+    @CacheEvict(value = {"expenses", "expensesByUser", "expenseTotals", "expenseTotalsByUser", "expenseHighest", "expenseHighestByUser", "expenseCounts", "categorySummaryByUser"}, allEntries = true)
     public void deleteExpenseById(Long id) {
         Expense expense = expenseRepository.findById(id).orElse(null);
         if (expense != null) {
@@ -159,7 +191,13 @@ public class ExpenseService {
         return expenseRepository.findByCategoryIgnoreCase(category);
     }
 
+    /**
+     * Auto-categorize expense based on description keywords
+     * Uses simple keyword matching for basic categorization
+     */
     private String categorizeExpense(String description) {
+        if (description == null) return "Other";
+        
         description = description.toLowerCase();
         if (description.contains("food") || description.contains("restaurant") || description.contains("grocery")) {
             return "Food";

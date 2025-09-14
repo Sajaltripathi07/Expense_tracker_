@@ -4,6 +4,7 @@ import com.example.expensetracker.model.Role;
 import com.example.expensetracker.model.User;
 import com.example.expensetracker.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.example.expensetracker.config.JwtUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,10 +22,12 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     @GetMapping("/auth")
@@ -77,7 +80,7 @@ public class AuthController {
         return "redirect:/auth?success";
     }
 
-    @PostMapping("/api/signup")
+    @PostMapping("/api/auth/signup")
     public ResponseEntity<?> signupJson(@RequestBody Map<String, String> payload) {
         String username = payload.get("username");
         String email = payload.get("email");
@@ -102,10 +105,33 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(Role.USER);
         userRepository.save(user);
-        return ResponseEntity.ok(Map.of("message", "Signup successful! Please login."));
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
+        Map<String, Object> body = new HashMap<>();
+        body.put("token", token);
+        body.put("username", user.getUsername());
+        body.put("role", user.getRole());
+        return ResponseEntity.ok(body);
     }
 
-    @PostMapping("/api/login")
+    @GetMapping("/api/auth/me")
+    public ResponseEntity<?> me(@RequestParam(value = "username", required = false) String usernameFromParam) {
+        // For simplicity, accept username param as a fallback when called without security context
+        String username;
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            username = (auth != null) ? auth.getName() : usernameFromParam;
+        } catch (Exception e) {
+            username = usernameFromParam;
+        }
+        if (username == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+        return userRepository.findByUsername(username)
+                .map(u -> ResponseEntity.ok(Map.of("username", u.getUsername(), "email", u.getEmail(), "role", u.getRole())))
+                .orElse(ResponseEntity.status(404).body(Map.of("error", "User not found")));
+    }
+
+    @PostMapping("/api/auth/login")
     public ResponseEntity<?> loginJson(@RequestBody Map<String, String> payload) {
         String username = payload.get("username");
         String password = payload.get("password");
@@ -120,7 +146,12 @@ public class AuthController {
             }
             
             if (passwordEncoder.matches(password, user.getPassword())) {
-                return ResponseEntity.ok(Map.of("message", "Login successful!"));
+                String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
+                Map<String, Object> body = new HashMap<>();
+                body.put("token", token);
+                body.put("username", user.getUsername());
+                body.put("role", user.getRole());
+                return ResponseEntity.ok(body);
             } else {
                 return ResponseEntity.status(401).body(Map.of("error", "Invalid password"));
             }

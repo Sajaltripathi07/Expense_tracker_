@@ -14,13 +14,20 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
+/**
+ * Controller for handling expense-related web requests
+ * Provides both web UI endpoints and REST API endpoints
+ */
 @Controller
 public class ExpenseController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExpenseController.class);
 
     @Autowired
     private ExpenseService expenseService;
@@ -31,6 +38,9 @@ public class ExpenseController {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Get the currently authenticated user
+     */
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -38,6 +48,9 @@ public class ExpenseController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    /**
+     * Root path - redirects to dashboard if authenticated, otherwise to login
+     */
     @GetMapping("/")
     public String rootPath() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -49,9 +62,13 @@ public class ExpenseController {
         }
     }
 
+    /**
+     * Display the main dashboard with user's expenses and summary
+     */
     @GetMapping("/dashboard")
     public String showDashboard(Model model) {
         User currentUser = getCurrentUser();
+        logger.debug("Loading dashboard for user: {}", currentUser.getUsername());
         List<Expense> expenses = expenseService.getExpensesByUser(currentUser);
         
         BigDecimal totalAmount = expenseService.getTotalAmountByUser(currentUser);
@@ -82,6 +99,7 @@ public class ExpenseController {
     public String saveExpense(@ModelAttribute Expense expense, RedirectAttributes redirectAttributes) {
         try {
             User currentUser = getCurrentUser();
+            logger.info("Saving expense for user: {}", currentUser.getUsername());
             
             // Get or create a default account for the user
             List<FinancialAccount> accounts = financialAccountRepository.findByUser(currentUser);
@@ -193,6 +211,23 @@ public class ExpenseController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // Dashboard API endpoints
+    @GetMapping("/api/dashboard/summary")
+    public ResponseEntity<?> dashboardSummary() {
+        User currentUser = getCurrentUser();
+        List<Expense> expenses = expenseService.getExpensesByUser(currentUser);
+        java.math.BigDecimal totalAmount = expenseService.getTotalAmountByUser(currentUser);
+        java.math.BigDecimal highestExpense = expenseService.getHighestExpenseByUser(currentUser);
+        int totalEntries = expenses.size();
+        Map<String, java.math.BigDecimal> categorySummary = expenseService.getCategorySummaryByUser(currentUser);
+        Map<String, Object> body = new HashMap<>();
+        body.put("totalAmount", totalAmount);
+        body.put("highestExpense", highestExpense);
+        body.put("totalEntries", totalEntries);
+        body.put("categorySummary", categorySummary);
+        return ResponseEntity.ok(body);
     }
 
     @GetMapping("/api/expense/{id}")
